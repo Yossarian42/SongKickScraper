@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Touring Artists</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <h1>Touring artists</h1>
+  <p class="subtitle" id="subtitle">Loading concerts…</p>
+  <div class="controls">
+    <input id="search" type="search" placeholder="Search artists…" autocomplete="off" aria-label="Search artists">
+    <select id="sort" aria-label="Sort artists">
+      <option value="cities">Most cities first</option>
+      <option value="concerts">Most concerts first</option>
+      <option value="name">A–Z</option>
+    </select>
+    <label class="toggle"><input id="favOnly" type="checkbox"> ★ Favourites only</label>
+  </div>
+  <div id="content"></div>
+</main>
+<script src="common.js"></script>
+<script>
+const PAGE = 500;
+const content = document.getElementById("content");
+const search = document.getElementById("search");
+const sort = document.getElementById("sort");
+const favOnly = document.getElementById("favOnly");
+const subtitle = document.getElementById("subtitle");
+let touring = [];      // artists playing 2+ cities
+let allArtists = [];   // every artist with at least one concert
+let favourites = new Set();
+let shown = PAGE;
+let stats = "";
+
+try { favOnly.checked = localStorage.getItem("favOnly") === "1"; } catch (e) {}
+
+const sorters = {
+  cities: (a, b) => b.cities - a.cities || b.concerts - a.concerts || a.name.localeCompare(b.name),
+  concerts: (a, b) => b.concerts - a.concerts || b.cities - a.cities || a.name.localeCompare(b.name),
+  name: (a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+};
+
+function render() {
+  const query = foldText(search.value.trim());
+  // Favourites view: every favourite that has concerts in the current data, even in one city.
+  const pool = favOnly.checked ? allArtists.filter(a => favourites.has(a.name)) : touring;
+  const matches = pool.filter(a => !query || a.folded.includes(query)).sort(sorters[sort.value]);
+  subtitle.textContent = favOnly.checked
+    ? `${plural(pool.length, "favourite")} with concerts (${favourites.size.toLocaleString()} saved) · ${stats}`
+    : `${touring.length.toLocaleString()} artists playing 2+ cities (out of ${allArtists.length.toLocaleString()}) · ${stats}`;
+  if (!matches.length) {
+    content.innerHTML = `<div class="empty">${
+      query ? `No artists match “${escapeHtml(search.value)}”.`
+      : favOnly.checked ? "None of your favourites have concerts in the current data. Click ☆ next to an artist to add one."
+      : "No artists found."}</div>`;
+    return;
+  }
+  const items = matches.slice(0, shown).map(a => `
+    <li>${starButton(a.name, favourites.has(a.name))}<a href="artist.html?name=${encodeURIComponent(a.name)}" target="_blank" rel="noopener">
+      <span class="artist-name">${escapeHtml(a.name)}</span>
+      <span class="artist-meta">${plural(a.cities, "city", "cities")} · ${plural(a.countries, "country", "countries")} · ${plural(a.concerts, "concert")} · ${escapeHtml(dateRange(a))}</span>
+    </a></li>`).join("");
+  const more = matches.length > shown
+    ? `<button class="more" id="more">Show more (${matches.length - shown} remaining)</button>` : "";
+  content.innerHTML = `<ul class="artist-list">${items}</ul>${more}`;
+  document.getElementById("more")?.addEventListener("click", () => { shown += PAGE; render(); });
+}
+
+Promise.all([loadConcerts(), loadFavourites()]).then(([concerts, favs]) => {
+  favourites = favs;
+  for (const [name, rows] of groupBy(concerts, c => c.Artist)) {
+    const artist = { name, folded: foldText(name), ...summarize(rows) };
+    allArtists.push(artist);
+    if (isTouring(rows)) touring.push(artist);
+  }
+  stats = `${concerts.length.toLocaleString()} concert dates`;
+  render();
+}).catch(err => {
+  subtitle.textContent = "";
+  showError(content, err.message);
+});
+
+content.addEventListener("click", async event => {
+  const star = event.target.closest(".star");
+  if (!star) return;
+  star.disabled = true;
+  try {
+    favourites = await toggleFavourite(star.dataset.artist);
+    render();
+  } catch (err) {
+    alert(err.message);
+    star.disabled = false;
+  }
+});
+
+// Pick up favourites changed in an artist tab when coming back to this one.
+document.addEventListener("visibilitychange", async () => {
+  if (document.visibilityState !== "visible" || !allArtists.length) return;
+  try { favourites = await loadFavourites(); render(); } catch (e) {}
+});
+
+search.addEventListener("input", () => { shown = PAGE; render(); });
+sort.addEventListener("change", () => { shown = PAGE; render(); });
+favOnly.addEventListener("change", () => {
+  try { localStorage.setItem("favOnly", favOnly.checked ? "1" : "0"); } catch (e) {}
+  shown = PAGE;
+  render();
+});
+</script>
+</body>
+</html>

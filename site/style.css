@@ -1,0 +1,109 @@
+:root {
+  --bg: #f7f7f5;
+  --surface: #ffffff;
+  --text: #1c1c1e;
+  --muted: #6b6b70;
+  --border: #e2e2de;
+  --accent: #c2410c;
+  --accent-soft: #fdeee4;
+  --hover: #f0efeb;
+  --level1: #c2410c;
+  --level2: #0e7490;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #151517;
+    --surface: #1e1e21;
+    --text: #ececef;
+    --muted: #9a9aa2;
+    --border: #2f2f34;
+    --accent: #fb923c;
+    --accent-soft: #3a2518;
+    --hover: #26262a;
+    --level1: #fb923c;
+    --level2: #22d3ee;
+  }
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+main { max-width: 860px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { margin: 0 0 4px; font-size: 1.75rem; letter-spacing: -0.01em; }
+.subtitle { color: var(--muted); margin: 0 0 24px; }
+a { color: var(--accent); }
+
+.controls { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.controls input, .controls select, button {
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+.controls input[type="search"] { flex: 1 1 240px; min-width: 0; }
+button { cursor: pointer; }
+button:hover { background: var(--hover); }
+
+/* Artist list */
+.artist-list { list-style: none; margin: 0; padding: 0; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.artist-list li + li { border-top: 1px solid var(--border); }
+.artist-list li { display: flex; align-items: center; }
+.artist-list li:hover { background: var(--hover); }
+.artist-list .star { margin-left: 8px; }
+.artist-list a { flex: 1; min-width: 0; display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
+  padding: 10px 16px; color: var(--text); text-decoration: none; }
+
+.star { background: none; border: none; padding: 4px 6px; font-size: 1.25rem; line-height: 1;
+  color: var(--muted); border-radius: 6px; }
+.star.on { color: #eab308; }
+.star:hover { background: var(--hover); color: #eab308; }
+.star:disabled { opacity: 0.5; cursor: wait; }
+.title-row { display: flex; align-items: center; gap: 4px; }
+.title-row .star { font-size: 1.6rem; margin-left: -6px; }
+.toggle { display: flex; align-items: center; gap: 6px; padding: 8px 4px; cursor: pointer;
+  user-select: none; white-space: nowrap; }
+.toggle input { width: 16px; height: 16px; margin: 0; padding: 0; accent-color: var(--accent); }
+.artist-name { font-weight: 600; overflow-wrap: anywhere; }
+.artist-meta { color: var(--muted); font-size: 0.85rem; text-align: right; white-space: nowrap; }
+@media (max-width: 600px) {
+  .artist-list a { flex-direction: column; gap: 2px; }
+  .artist-meta { text-align: left; white-space: normal; }
+}
+.more { display: block; margin: 16px auto 0; }
+
+/* Artist page tree */
+.toolbar { display: flex; gap: 8px; margin-bottom: 16px; }
+details { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+details + details { margin-top: 8px; }
+summary { cursor: pointer; list-style: none; padding: 12px 16px; display: flex;
+  align-items: baseline; gap: 10px; border-radius: 12px; }
+summary::-webkit-details-marker { display: none; }
+summary::before { content: "▸"; color: var(--muted); transition: transform 0.15s; display: inline-block; }
+details[open] > summary::before { transform: rotate(90deg); }
+summary:hover { background: var(--hover); }
+.summary-title { font-weight: 600; }
+.summary-meta { color: var(--muted); font-size: 0.85rem; }
+
+.country > summary { border-left: 4px solid var(--level1); }
+.country > .children { padding: 0 12px 12px 24px; }
+.city { border-radius: 10px; }
+.city > summary { border-left: 4px solid var(--level2); border-radius: 10px; padding: 10px 14px; }
+.city > .children { padding: 4px 12px 12px 24px; display: grid; gap: 8px; }
+
+.concert { border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; }
+.concert-date { font-weight: 600; font-variant-numeric: tabular-nums; }
+.concert dl { margin: 4px 0 0; display: grid; grid-template-columns: max-content 1fr; gap: 2px 12px; }
+.concert dt { color: var(--muted); font-size: 0.85rem; }
+.concert dd { margin: 0; overflow-wrap: anywhere; }
+.badge { display: inline-block; background: var(--accent-soft); color: var(--accent);
+  border-radius: 999px; padding: 1px 10px; font-size: 0.8rem; font-weight: 600; margin-left: 8px; }
+
+.error { background: var(--accent-soft); color: var(--accent); border-radius: 12px; padding: 16px; }
+.empty { color: var(--muted); padding: 16px; }

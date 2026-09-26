@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Generated data
+concerts.csv
+metro_index.json
+
+# Personal data
+favourites.json
+
+# Editor / tooling
+.claude/settings.local.json
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

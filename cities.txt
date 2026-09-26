@@ -1,0 +1,136 @@
+# One city per line, English names. Add a country after a comma if the name is ambiguous.
+
+# United Kingdom & Ireland
+London, UK
+Manchester, UK
+Birmingham, UK
+Glasgow, UK
+Edinburgh, UK
+Liverpool, UK
+Leeds, UK
+Bristol, UK
+Newcastle upon Tyne, UK
+Nottingham, UK
+Brighton, UK
+Cardiff, UK
+Belfast, UK
+Dublin
+Cork
+
+# Netherlands, Belgium, Luxembourg
+Amsterdam
+Rotterdam
+Utrecht
+Hague
+Eindhoven
+Tilburg
+Groningen, Netherlands
+Brussels
+Antwerp
+Ghent
+Luxembourg
+
+# France
+Paris
+Lyon
+Marseille
+Toulouse
+Bordeaux
+Lille
+Nantes
+Nice
+Strasbourg
+Montpellier
+
+# Germany
+Berlin
+Hamburg
+Munich
+Cologne
+Frankfurt
+Stuttgart
+Dusseldorf
+Leipzig
+Dresden
+Hannover
+Nuremberg
+Bremen
+Dortmund
+Essen
+
+# Switzerland & Austria
+Zurich
+Geneva
+Basel
+Bern
+Lausanne
+Vienna
+Salzburg
+Innsbruck
+Graz
+
+# Nordics
+Copenhagen
+Aarhus
+Stockholm
+Gothenburg
+Malmo
+Oslo
+Bergen
+Helsinki
+Tampere
+Reykjavik
+
+# Baltics
+Tallinn
+Riga
+Vilnius
+
+# Poland, Czechia, Slovakia, Hungary
+Warsaw
+Krakow
+Wroclaw
+Gdansk
+Poznan
+Prague
+Brno
+Bratislava
+Budapest
+
+# Italy
+Rome
+Milan
+Florence
+Venice
+Naples
+Bologna
+Turin
+Verona
+
+# Spain & Portugal
+Madrid
+Barcelona
+Valencia
+Seville
+Bilbao
+Malaga
+Palma de Mallorca
+Ibiza
+Lisbon
+Porto
+
+# Southeast Europe
+Athens
+Thessaloniki
+Ljubljana
+Zagreb
+Split
+Belgrade
+Novi Sad
+Sarajevo
+Sofia
+Bucharest
+Cluj-Napoca
+Istanbul
+Valletta
+Limassol

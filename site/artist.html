@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Artist Concerts</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <div class="title-row"><span id="starSlot"></span><h1 id="title">Loading…</h1></div>
+  <p class="subtitle" id="subtitle"></p>
+  <div class="toolbar" id="toolbar" hidden>
+    <button id="expand">Expand all</button>
+    <button id="collapse">Collapse all</button>
+  </div>
+  <div id="content"></div>
+</main>
+<script src="common.js"></script>
+<script>
+const content = document.getElementById("content");
+const artist = new URLSearchParams(location.search).get("name") || "";
+const weekday = new Intl.DateTimeFormat("en-GB", { weekday: "short" });
+
+// Groups ordered by their earliest concert, so the page reads like the tour route.
+function orderedGroups(concerts, keyFn) {
+  return [...groupBy(concerts, keyFn)].sort((a, b) =>
+    a[1][0].dateKey.localeCompare(b[1][0].dateKey) || a[0].localeCompare(b[0]));
+}
+
+function concertCard(c) {
+  const rows = [
+    ["Venue", escapeHtml(c.Venue || "Unknown venue")],
+    ["Address", escapeHtml(c["Venue Address"] || "—")],
+    ["City", `${escapeHtml(c.City)}, ${escapeHtml(c.Country)}`],
+    c.Festival ? ["Festival", escapeHtml(c.Festival)] : null,
+    ["Songkick", `<a href="${escapeHtml(c.Link)}" target="_blank" rel="noopener">Open on Songkick ↗</a>`],
+  ].filter(Boolean);
+  return `<div class="concert">
+    <div class="concert-date">${weekday.format(c.dateObj)} ${escapeHtml(c.Date)}${
+      c.Festival ? `<span class="badge">${escapeHtml(c.Festival)}</span>` : ""}</div>
+    <dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>
+  </div>`;
+}
+
+function render(concerts) {
+  concerts.sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+  const html = orderedGroups(concerts, c => c.Country).map(([country, inCountry]) => {
+    const cities = orderedGroups(inCountry, c => c.City);
+    const cityHtml = cities.map(([city, inCity]) => `
+      <details class="city">
+        <summary><span class="summary-title">${escapeHtml(city)}</span>
+          <span class="summary-meta">${plural(inCity.length, "concert")} · ${escapeHtml(dateRange(summarize(inCity)))}</span></summary>
+        <div class="children">${inCity.map(concertCard).join("")}</div>
+      </details>`).join("");
+    return `
+      <details class="country">
+        <summary><span class="summary-title">${escapeHtml(country || "Unknown country")}</span>
+          <span class="summary-meta">${plural(cities.length, "city", "cities")} · ${plural(inCountry.length, "concert")}</span></summary>
+        <div class="children">${cityHtml}</div>
+      </details>`;
+  }).join("");
+  content.innerHTML = html;
+}
+
+document.title = artist ? `${artist} · Concerts` : "Artist Concerts";
+document.getElementById("title").textContent = artist || "No artist selected";
+
+const starSlot = document.getElementById("starSlot");
+function renderStar(favourites) {
+  starSlot.innerHTML = starButton(artist, favourites.has(artist));
+}
+starSlot.addEventListener("click", async () => {
+  const star = starSlot.querySelector(".star");
+  if (!star) return;
+  star.disabled = true;
+  try { renderStar(await toggleFavourite(artist)); }
+  catch (err) { alert(err.message); star.disabled = false; }
+});
+if (artist) loadFavourites().then(renderStar).catch(() => {});
+
+loadConcerts().then(all => {
+  const concerts = all.filter(c => c.Artist === artist);
+  if (!concerts.length) {
+    showError(content, `No concerts found for “${artist}”.`);
+    return;
+  }
+  const s = summarize(concerts);
+  document.getElementById("subtitle").textContent =
+    `${plural(s.countries, "country", "countries")} · ${plural(s.cities, "city", "cities")} · ${plural(s.concerts, "concert")} · ${dateRange(s)}`;
+  document.getElementById("toolbar").hidden = false;
+  render(concerts);
+}).catch(err => showError(content, err.message));
+
+const setAll = open => content.querySelectorAll("details").forEach(d => { d.open = open; });
+document.getElementById("expand").addEventListener("click", () => setAll(true));
+document.getElementById("collapse").addEventListener("click", () => setAll(false));
+</script>
+</body>
+</html>

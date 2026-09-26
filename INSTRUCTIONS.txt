@@ -1,0 +1,109 @@
+SONGKICK TOURING-ARTISTS TOOL
+=============================
+
+Two parts:
+  1. songkick_scraper.py - scrapes upcoming Songkick concerts for a list of
+     cities and saves them to concerts.csv.
+  2. The website (serve.py + site/) - reads concerts.csv and shows every
+     artist playing 2+ different cities, grouped by Country > City > Concert.
+
+
+ONE-TIME SETUP
+--------------
+Requires Python 3.10 or newer.
+
+Open a terminal in this folder and run:
+
+    pip install -r requirements.txt
+
+
+STEP 1 - RUN THE SCRAPER
+------------------------
+Choose your cities in cities.txt (one per line; lines starting with # are
+ignored). Use English city names. If a name exists in more than one country,
+add the country after a comma, e.g.:
+
+    Groningen, Netherlands
+    London, UK
+
+Then run:
+
+    python songkick_scraper.py --cities-file cities.txt
+
+This writes concerts.csv (overwriting any previous file).
+
+Optional settings:
+    --months 6            How far ahead to scrape (default: 12 months).
+    --delay 3             Seconds between requests (default: 3). Don't go
+                          much lower - be polite to Songkick.
+    --output file.csv     Save somewhere other than concerts.csv. (The
+                          website only reads concerts.csv.)
+    --refresh-metros      Rebuild the cached list of Songkick cities
+                          (metro_index.json). Rarely needed.
+
+You can also list cities directly instead of using a file:
+
+    python songkick_scraper.py Amsterdam Berlin "London, UK" --months 3
+
+How long it takes: a big city (London, Berlin, Paris) takes roughly 5-10
+minutes for 12 months; smaller cities a minute or two. The full cities.txt
+list takes a few hours. Progress is printed as it goes.
+
+Stopping early: press Ctrl+C. The concerts collected so far are still saved.
+
+If a city is skipped: the scraper prints why (not found, or ambiguous with a
+list of options). Fix the name in cities.txt and run again.
+
+CSV columns:
+    Artist, Country, City, Venue, Venue Address, Date (DD/MM/YYYY),
+    Link (Songkick page), Festival (festival name, blank if not a festival)
+Each performer at a concert gets its own row. Multi-day festivals get one
+row per day.
+
+
+STEP 2 - OPEN THE WEBSITE
+-------------------------
+After concerts.csv exists, run:
+
+    python serve.py
+
+Your browser opens at http://localhost:8000/site/
+(Keep the terminal open while browsing; press Ctrl+C in it to stop.)
+
+Optional settings:
+    --port 8080           Use a different port if 8000 is taken.
+    --no-browser          Don't open the browser automatically.
+
+Using the site:
+  - The main page lists artists playing at least two different cities.
+    Search by name, and sort by most cities, most concerts, or A-Z.
+  - Click an artist to open their concerts in a new tab.
+  - Click a country to see its cities; click a city to see the concerts
+    (date, venue, address, festival, and a link to Songkick).
+  - "Expand all" / "Collapse all" open or close everything at once.
+
+Favourites:
+  - Click the star next to an artist (on the list or on the artist's page)
+    to favourite it; click again to remove it.
+  - Tick "Favourites only" to show just your favourites. In this view a
+    favourite appears if it has at least one concert (even in one city);
+    favourites with no concerts in the current data are hidden, not deleted.
+  - Favourites are saved in favourites.json in this folder, separate from
+    concerts.csv, so they survive re-scraping. It's a plain list of artist
+    names - you can back it up, or edit it by hand while the site isn't open.
+
+After re-running the scraper, just reload the page - no restart needed.
+
+Note: opening site/index.html by double-clicking it will NOT work (browsers
+block local pages from reading files). Always use python serve.py.
+
+
+TROUBLESHOOTING
+---------------
+"No module named requests"      Run: pip install -r requirements.txt
+"concerts.csv not found"         Run the scraper (Step 1) first.
+"406 Not Acceptable"             Songkick rejected the request. Don't change
+                                 the scraper's User-Agent to a browser one.
+Page says it can't load data     Make sure python serve.py is still running.
+"Address already in use"         Another program uses port 8000; try
+                                 python serve.py --port 8080
