@@ -20,6 +20,13 @@
     <label class="toggle"><input id="favOnly" type="checkbox"> ★ Favourites only</label>
     <button id="selectMode" aria-pressed="false">Select to export</button>
   </div>
+  <div class="controls filters">
+    <select id="country" aria-label="Filter by country"><option value="">All countries</option></select>
+    <select id="city" aria-label="Filter by city"><option value="">All cities</option></select>
+    <label class="date-field">From <input id="dateFrom" type="date"></label>
+    <label class="date-field">To <input id="dateTo" type="date"></label>
+    <button id="resetFilters" hidden>Reset filters</button>
+  </div>
   <div class="selection-bar" id="selectionBar" hidden>
     <span id="selectionCount">0 selected</span>
     <button id="selectShown">Select all shown</button>
@@ -45,6 +52,52 @@ let selecting = false;
 let lastShown = [];          // artists currently rendered, for "Select all shown"
 let shown = PAGE;
 let stats = "";
+let allConcerts = [];
+let matchCounts = null;      // artist -> concerts matching the country/city/date filters; null when no filter is set
+
+const countrySelect = document.getElementById("country");
+const citySelect = document.getElementById("city");
+const dateFrom = document.getElementById("dateFrom");
+const dateTo = document.getElementById("dateTo");
+const resetFilters = document.getElementById("resetFilters");
+
+const option = (value, label) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`;
+
+function fillCountries() {
+  const countries = [...new Set(allConcerts.map(c => c.Country))].sort((a, b) => a.localeCompare(b));
+  countrySelect.innerHTML = option("", "All countries") + countries.map(c => option(c, c || "Unknown country")).join("");
+}
+
+// City options follow the chosen country; without one, the country is shown next to each city.
+function fillCities() {
+  const country = countrySelect.value;
+  const cities = new Map();
+  for (const c of allConcerts)
+    if (!country || c.Country === country) cities.set(cityKey(c), country ? c.City : `${c.City}, ${c.Country}`);
+  const previous = citySelect.value;
+  citySelect.innerHTML = option("", "All cities") + [...cities]
+    .sort((a, b) => a[1].localeCompare(b[1])).map(([key, label]) => option(key, label)).join("");
+  citySelect.value = cities.has(previous) ? previous : "";
+}
+
+// A concert must pass every active filter; an artist is shown if any of their concerts does.
+function applyFilters() {
+  const country = countrySelect.value, city = citySelect.value;
+  const from = dateFrom.value, to = dateTo.value;  // YYYY-MM-DD, same shape as dateKey
+  const active = country || city || from || to;
+  resetFilters.hidden = !active;
+  matchCounts = null;
+  if (active) {
+    matchCounts = new Map();
+    for (const c of allConcerts) {
+      if ((country && c.Country !== country) || (city && cityKey(c) !== city)
+        || (from && c.dateKey < from) || (to && c.dateKey > to)) continue;
+      matchCounts.set(c.Artist, (matchCounts.get(c.Artist) || 0) + 1);
+    }
+  }
+  shown = PAGE;
+  render();
+}
 
 try { favOnly.checked = localStorage.getItem("favOnly") === "1"; } catch (e) {}
 
@@ -58,13 +111,16 @@ function render() {
   const query = foldText(search.value.trim());
   // Favourites view: every favourite that has concerts in the current data, even in one city.
   const pool = favOnly.checked ? allArtists.filter(a => favourites.has(a.name)) : touring;
-  const matches = pool.filter(a => !query || a.folded.includes(query)).sort(sorters[sort.value]);
-  subtitle.textContent = favOnly.checked
+  const filtered = matchCounts ? pool.filter(a => matchCounts.has(a.name)) : pool;
+  const matches = filtered.filter(a => !query || a.folded.includes(query)).sort(sorters[sort.value]);
+  subtitle.textContent = (favOnly.checked
     ? `${plural(pool.length, "favourite")} with concerts (${favourites.size.toLocaleString()} saved) · ${stats}`
-    : `${touring.length.toLocaleString()} artists playing 2+ cities (out of ${allArtists.length.toLocaleString()}) · ${stats}`;
+    : `${touring.length.toLocaleString()} artists playing 2+ cities (out of ${allArtists.length.toLocaleString()}) · ${stats}`)
+    + (matchCounts ? ` · ${plural(filtered.length, "artist")} match the filters` : "");
   if (!matches.length) {
     content.innerHTML = `<div class="empty">${
       query ? `No artists match “${escapeHtml(search.value)}”.`
+      : matchCounts ? "No artists have a concert matching these filters."
       : favOnly.checked ? "None of your favourites have concerts in the current data. Click ☆ next to an artist to add one."
       : "No artists found."}</div>`;
     return;
@@ -75,7 +131,8 @@ function render() {
       aria-label="Select ${escapeHtml(a.name)}"${selected.has(a.name) ? " checked" : ""}>` : ""
     }${starButton(a.name, favourites.has(a.name))}<a href="artist.html?name=${encodeURIComponent(a.name)}" target="_blank" rel="noopener">
       <span class="artist-name">${escapeHtml(a.name)}</span>
-      <span class="artist-meta">${plural(a.cities, "city", "cities")} · ${plural(a.countries, "country", "countries")} · ${plural(a.concerts, "concert")} · ${escapeHtml(dateRange(a))}</span>
+      <span class="artist-meta">${plural(a.cities, "city", "cities")} · ${plural(a.countries, "country", "countries")} · ${plural(a.concerts, "concert")} · ${escapeHtml(dateRange(a))}${
+        matchCounts ? ` · <strong class="match">${plural(matchCounts.get(a.name), "match", "matches")}</strong>` : ""}</span>
     </a></li>`).join("");
   const more = matches.length > shown
     ? `<button class="more" id="more">Show more (${matches.length - shown} remaining)</button>` : "";
@@ -92,6 +149,9 @@ Promise.all([loadConcerts(), loadFavourites()]).then(([concerts, favs]) => {
     if (isTouring(rows)) touring.push(artist);
   }
   stats = `${concerts.length.toLocaleString()} concert dates`;
+  allConcerts = concerts;
+  fillCountries();
+  fillCities();
   render();
 }).catch(err => {
   subtitle.textContent = "";
@@ -160,6 +220,16 @@ exportSelected.addEventListener("click", () => {
     .map(name => [name, concertsByArtist.get(name)]);
   const baseName = artists.length === 1 ? `${artists[0][0]} - concerts` : `concerts - ${artists.length} artists`;
   openExportDialog(artists, baseName);
+});
+
+countrySelect.addEventListener("change", () => { fillCities(); applyFilters(); });
+citySelect.addEventListener("change", applyFilters);
+dateFrom.addEventListener("change", () => { dateTo.min = dateFrom.value; applyFilters(); });
+dateTo.addEventListener("change", () => { dateFrom.max = dateTo.value; applyFilters(); });
+resetFilters.addEventListener("click", () => {
+  countrySelect.value = citySelect.value = dateFrom.value = dateTo.value = dateFrom.max = dateTo.min = "";
+  fillCities();
+  applyFilters();
 });
 
 search.addEventListener("input", () => { shown = PAGE; render(); });

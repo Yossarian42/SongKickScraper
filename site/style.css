@@ -47,6 +47,10 @@ a { color: var(--accent); }
   padding: 8px 12px;
 }
 .controls input[type="search"] { flex: 1 1 240px; min-width: 0; }
+.filters select { flex: 1 1 160px; min-width: 0; max-width: 240px; }
+.date-field { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 0.9rem; }
+.date-field input { color-scheme: light dark; }
+.artist-meta .match { color: var(--accent); font-weight: 600; }
 button { cursor: pointer; }
 button:hover { background: var(--hover); }
 
