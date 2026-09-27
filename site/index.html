@@ -18,6 +18,13 @@
       <option value="name">A–Z</option>
     </select>
     <label class="toggle"><input id="favOnly" type="checkbox"> ★ Favourites only</label>
+    <button id="selectMode" aria-pressed="false">Select to export</button>
+  </div>
+  <div class="selection-bar" id="selectionBar" hidden>
+    <span id="selectionCount">0 selected</span>
+    <button id="selectShown">Select all shown</button>
+    <button id="clearSelection">Clear</button>
+    <button id="exportSelected" class="primary" disabled>Export selected</button>
   </div>
   <div id="content"></div>
 </main>
@@ -32,6 +39,10 @@ const subtitle = document.getElementById("subtitle");
 let touring = [];      // artists playing 2+ cities
 let allArtists = [];   // every artist with at least one concert
 let favourites = new Set();
+const concertsByArtist = new Map();
+const selected = new Set();  // artist names ticked for export
+let selecting = false;
+let lastShown = [];          // artists currently rendered, for "Select all shown"
 let shown = PAGE;
 let stats = "";
 
@@ -58,8 +69,11 @@ function render() {
       : "No artists found."}</div>`;
     return;
   }
-  const items = matches.slice(0, shown).map(a => `
-    <li>${starButton(a.name, favourites.has(a.name))}<a href="artist.html?name=${encodeURIComponent(a.name)}" target="_blank" rel="noopener">
+  lastShown = matches.slice(0, shown);
+  const items = lastShown.map(a => `
+    <li>${selecting ? `<input type="checkbox" class="pick" data-artist="${escapeHtml(a.name)}"
+      aria-label="Select ${escapeHtml(a.name)}"${selected.has(a.name) ? " checked" : ""}>` : ""
+    }${starButton(a.name, favourites.has(a.name))}<a href="artist.html?name=${encodeURIComponent(a.name)}" target="_blank" rel="noopener">
       <span class="artist-name">${escapeHtml(a.name)}</span>
       <span class="artist-meta">${plural(a.cities, "city", "cities")} · ${plural(a.countries, "country", "countries")} · ${plural(a.concerts, "concert")} · ${escapeHtml(dateRange(a))}</span>
     </a></li>`).join("");
@@ -72,6 +86,7 @@ function render() {
 Promise.all([loadConcerts(), loadFavourites()]).then(([concerts, favs]) => {
   favourites = favs;
   for (const [name, rows] of groupBy(concerts, c => c.Artist)) {
+    concertsByArtist.set(name, rows);
     const artist = { name, folded: foldText(name), ...summarize(rows) };
     allArtists.push(artist);
     if (isTouring(rows)) touring.push(artist);
@@ -100,6 +115,51 @@ content.addEventListener("click", async event => {
 document.addEventListener("visibilitychange", async () => {
   if (document.visibilityState !== "visible" || !allArtists.length) return;
   try { favourites = await loadFavourites(); render(); } catch (e) {}
+});
+
+const selectMode = document.getElementById("selectMode");
+const selectionBar = document.getElementById("selectionBar");
+const exportSelected = document.getElementById("exportSelected");
+
+function updateSelectionBar() {
+  document.getElementById("selectionCount").textContent = `${plural(selected.size, "artist")} selected`;
+  exportSelected.disabled = !selected.size;
+}
+
+selectMode.addEventListener("click", () => {
+  selecting = !selecting;
+  selectMode.setAttribute("aria-pressed", selecting);
+  selectMode.textContent = selecting ? "Done selecting" : "Select to export";
+  selectionBar.hidden = !selecting;
+  updateSelectionBar();
+  render();
+});
+
+content.addEventListener("change", event => {
+  const box = event.target.closest(".pick");
+  if (!box) return;
+  if (box.checked) selected.add(box.dataset.artist); else selected.delete(box.dataset.artist);
+  updateSelectionBar();
+});
+
+document.getElementById("selectShown").addEventListener("click", () => {
+  lastShown.forEach(a => selected.add(a.name));
+  updateSelectionBar();
+  render();
+});
+
+document.getElementById("clearSelection").addEventListener("click", () => {
+  selected.clear();
+  updateSelectionBar();
+  render();
+});
+
+exportSelected.addEventListener("click", () => {
+  const artists = [...selected].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }))
+    .filter(name => concertsByArtist.has(name))
+    .map(name => [name, concertsByArtist.get(name)]);
+  const baseName = artists.length === 1 ? `${artists[0][0]} - concerts` : `concerts - ${artists.length} artists`;
+  openExportDialog(artists, baseName);
 });
 
 search.addEventListener("input", () => { shown = PAGE; render(); });

@@ -78,6 +78,35 @@ button:hover { background: var(--hover); }
 }
 .more { display: block; margin: 16px auto 0; }
 
+/* Multi-select export */
+button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+button.primary:hover { filter: brightness(1.08); background: var(--accent); }
+button:disabled { opacity: 0.5; cursor: default; }
+.selection-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
+  padding: 8px 12px; background: var(--accent-soft); border-radius: 10px;
+  position: sticky; top: 8px; z-index: 1; }
+.selection-bar[hidden] { display: none; }
+.selection-bar span { font-weight: 600; margin-right: auto; }
+.export-dialog { width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 32px); padding: 20px;
+  background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 14px; }
+.export-dialog::backdrop { background: rgb(0 0 0 / 0.45); }
+.export-dialog h2 { margin: 0 0 12px; font-size: 1.2rem; overflow-wrap: anywhere; }
+.export-dialog fieldset { border: 1px solid var(--border); border-radius: 10px; margin: 0 0 12px; padding: 8px 12px 12px; }
+.export-dialog legend { font-weight: 600; padding: 0 4px; }
+.export-dialog .hint { color: var(--muted); font-size: 0.85rem; margin: 0 0 8px; }
+.country-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 2px 12px;
+  max-height: 40vh; overflow-y: auto; margin-bottom: 8px; }
+.country-grid label { display: flex; align-items: center; gap: 6px; padding: 3px 0; cursor: pointer; }
+.country-grid input { accent-color: var(--accent); margin: 0; }
+.country-grid .count { color: var(--muted); font-size: 0.8rem; margin-left: auto; }
+.export-dialog .keep-all { white-space: normal; align-items: flex-start; }
+.export-dialog .keep-all input { margin-top: 3px; flex: none; }
+.export-dialog .keep-all.inactive { color: var(--muted); }
+.export-summary { color: var(--muted); font-size: 0.9rem; margin: 8px 0 16px; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.pick { width: 18px; height: 18px; margin: 0 0 0 14px; flex: none; accent-color: var(--accent); cursor: pointer; }
+
 /* Artist page tree */
 .toolbar { display: flex; gap: 8px; margin-bottom: 16px; }
 details { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }

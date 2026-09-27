@@ -13,6 +13,7 @@
   <div class="toolbar" id="toolbar" hidden>
     <button id="expand">Expand all</button>
     <button id="collapse">Collapse all</button>
+    <button id="export">Export concerts</button>
   </div>
   <div id="content"></div>
 </main>
@@ -21,12 +22,6 @@
 const content = document.getElementById("content");
 const artist = new URLSearchParams(location.search).get("name") || "";
 const weekday = new Intl.DateTimeFormat("en-GB", { weekday: "short" });
-
-// Groups ordered by their earliest concert, so the page reads like the tour route.
-function orderedGroups(concerts, keyFn) {
-  return [...groupBy(concerts, keyFn)].sort((a, b) =>
-    a[1][0].dateKey.localeCompare(b[1][0].dateKey) || a[0].localeCompare(b[0]));
-}
 
 function concertCard(c) {
   const rows = [
@@ -90,6 +85,8 @@ loadConcerts().then(all => {
     `${plural(s.countries, "country", "countries")} · ${plural(s.cities, "city", "cities")} · ${plural(s.concerts, "concert")} · ${dateRange(s)}`;
   document.getElementById("toolbar").hidden = false;
   render(concerts);
+  document.getElementById("export").addEventListener("click", () =>
+    openExportDialog([[artist, concerts]], `${artist} - concerts`));
 }).catch(err => showError(content, err.message));
 
 const setAll = open => content.querySelectorAll("details").forEach(d => { d.open = open; });
