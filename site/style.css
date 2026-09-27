@@ -4,11 +4,14 @@
   --text: #1c1c1e;
   --muted: #6b6b70;
   --border: #e2e2de;
-  --accent: #c2410c;
-  --accent-soft: #fdeee4;
+  --accent: #2563eb;
+  --accent-soft: #e6eefe;
   --hover: #f0efeb;
-  --level1: #c2410c;
-  --level2: #0e7490;
+  --level1: #2563eb;
+  --level2: #0d9488;
+  --primary: #1d4ed8;
+  --primary-hover: #1e40af;
+  --on-accent: #ffffff;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -17,11 +20,14 @@
     --text: #ececef;
     --muted: #9a9aa2;
     --border: #2f2f34;
-    --accent: #fb923c;
-    --accent-soft: #3a2518;
+    --accent: #60a5fa;
+    --accent-soft: #172554;
     --hover: #26262a;
-    --level1: #fb923c;
-    --level2: #22d3ee;
+    --level1: #60a5fa;
+    --level2: #2dd4bf;
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
+    --on-accent: #ffffff;
   }
 }
 
@@ -66,8 +72,8 @@ button:hover { background: var(--hover); }
 
 .star { background: none; border: none; padding: 4px 6px; font-size: 1.25rem; line-height: 1;
   color: var(--muted); border-radius: 6px; }
-.star.on { color: #eab308; }
-.star:hover { background: var(--hover); color: #eab308; }
+.star.on { color: var(--accent); }
+.star:hover { background: var(--hover); color: var(--accent); }
 .star:disabled { opacity: 0.5; cursor: wait; }
 .title-row { display: flex; align-items: center; gap: 4px; }
 .title-row .star { font-size: 1.6rem; margin-left: -6px; }
@@ -83,9 +89,9 @@ button:hover { background: var(--hover); }
 .more { display: block; margin: 16px auto 0; }
 
 /* Multi-select export */
-button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
-button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-button.primary:hover { filter: brightness(1.08); background: var(--accent); }
+button[aria-pressed="true"]:not(.star) { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+button.primary { background: var(--primary); color: var(--on-accent); border-color: var(--primary); font-weight: 600; }
+button.primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
 button:disabled { opacity: 0.5; cursor: default; }
 .selection-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
   padding: 8px 12px; background: var(--accent-soft); border-radius: 10px;
